@@ -1,15 +1,21 @@
+import { Metadata } from 'next';
+import { getDetail } from '@/libs/microcms';
+import Article from '@/components/Article';
+
 type Props = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
-  searchParams: {
-    dk?: string;
-  };
+  }>;
+  searchParams: Promise<{
+    dk: string;
+  }>;
 };
 
-export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const data = await getDetail(params.slug, {
-    draftKey: searchParams?.dk,
+    draftKey: searchParams.dk,
   });
 
   return {
@@ -21,14 +27,16 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       images: [data?.thumbnail?.url || ''],
     },
     alternates: {
-      canonical: `/articles/${params.slug}`,
+      canonical: /articles/${params.slug},
     },
   };
 }
 
-export default async function Page({ params, searchParams }: Props) {
+export default async function Page(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const data = await getDetail(params.slug, {
-    draftKey: searchParams?.dk,
+    draftKey: searchParams.dk,
   });
 
   return <Article data={data} />;
